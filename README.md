@@ -6,17 +6,14 @@ Welcome! This repository is your starting point for the **Agentic AI App Hackath
 - An environment spec (`environment.yml` or `Dockerfile`)  
 - Documentation placeholders to explain your design and demo
 
+**Important:** Clone or fork this template. The fork name MUST be the same as your team name.
+
 ## 📋 Submission Checklist
 
 - [ ] All code in `src/` runs without errors  
 - [ ] `ARCHITECTURE.md` contains a clear diagram sketch and explanation  
 - [ ] `EXPLANATION.md` covers planning, tool use, memory, and limitations  
 - [ ] `DEMO.md` links to a 3–5 min video with timestamped highlights  
-
-
-## 🚀 Getting Started
-
-1. **Clone / Fork** this template.  Very Important. Fork Name MUST be the same name as the teamn name
 
 
 ## 📂 Folder Layout

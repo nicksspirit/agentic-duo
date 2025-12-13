@@ -2,3 +2,6 @@
 src/backend/.venv
 .cursor/
 **/.python-version
+**/.pytest_cache
+**/execution.log
+**/__pycache__
