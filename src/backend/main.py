@@ -37,7 +37,9 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan event handler for startup/shutdown."""
-    logger.info("Starting Agentic Slide Deck server")
+    logger.info("Starting Slidekick server")
+
+    config.SLIDES_DIR.mkdir(parents=True, exist_ok=True)
 
     # Create symbolic link to mermaid in static slides
     mermaid_src = Path("node_modules/mermaid")
@@ -71,7 +73,6 @@ app.add_middleware(
 )
 
 # Mount static files for the generated slides
-config.SLIDES_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/slides", StaticFiles(directory=config.SLIDES_DIR, html=True), name="slides")
 
 

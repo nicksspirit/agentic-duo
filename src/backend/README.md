@@ -20,14 +20,18 @@ The Slidekick backend provides a WebSocket-based API that processes real-time au
 ### Prerequisites
 
 - Python 3.11+
+- Node.js 18+ (for reveal-md)
 - [uv](https://docs.astral.sh/uv/) package manager
 - Gemini API key
 
 ### Installation
 
 ```bash
-# Create virtual environment and install dependencies
+# Create virtual environment and install Python dependencies
 uv sync
+
+# Install Node.js dependencies for reveal-md
+npm install
 ```
 
 > Note: When using `uv run`, you don't need to activate the virtual environment manually. The `uv run` command automatically uses the project's virtual environment.
