@@ -1,8 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Mic, MicOff, Volume2, SkipBack, SkipForward, Image as ImageIcon, FileText } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
 import { WebSocketMessage } from '../types/websocket';
-import { Toast } from './Toast';
 
 interface PresenterViewProps {
   slideUrl: string;
@@ -47,10 +45,10 @@ export const PresenterView: React.FC<PresenterViewProps> = ({ slideUrl, onExit }
   const [transcript, setTranscript] = useState<string[]>([]);
   const [aiStatus, setAiStatus] = useState<string>('Ready');
   const [detectedIntent, setDetectedIntent] = useState<{ tool: string; args: Record<string, unknown> } | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [totalSlides, setTotalSlides] = useState(0);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   // Auto-scroll transcript
   useEffect(() => {
@@ -129,6 +127,18 @@ export const PresenterView: React.FC<PresenterViewProps> = ({ slideUrl, onExit }
     }
   }, [getReveal, syncSlidePosition]);
 
+  // Request summary generation
+  const requestSummary = useCallback(() => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      setAiStatus('Error: Voice control must be active');
+      return;
+    }
+
+    setIsGeneratingSummary(true);
+    setAiStatus('Generating summary...');
+    wsRef.current.send(JSON.stringify({ type: 'request_summary' }));
+  }, []);
+
 
 
   // Inject summary slide
@@ -159,20 +169,14 @@ export const PresenterView: React.FC<PresenterViewProps> = ({ slideUrl, onExit }
           setTotalSlides(Reveal.getTotalSlides());
           setCurrentSlide(Reveal.getIndices().h);
           console.debug('injectSummary: Reveal synced and navigated');
-
-          // Show Success Toast
-          setToast({ message: 'Summary slide generated and injected!', type: 'success' });
         } else {
           console.error('injectSummary: Reveal instance not found after DOM update');
-          setToast({ message: 'Summary generated but layout update failed.', type: 'error' });
         }
       } else {
         console.error('injectSummary: .reveal .slides container not found');
-        setToast({ message: 'Failed to find slides container.', type: 'error' });
       }
     } catch (e) {
       console.error('injectSummary failed:', e);
-      setToast({ message: 'Summary injection failed.', type: 'error' });
     }
   }, [getReveal]);
 
@@ -206,9 +210,6 @@ export const PresenterView: React.FC<PresenterViewProps> = ({ slideUrl, onExit }
           case 'tool_result':
             setAiStatus(`Tool complete: ${message.status}`);
             setTimeout(() => setDetectedIntent(null), 3000);
-            if (message.status === 'error') {
-              setToast({ message: `Action failed: ${message.tool}`, type: 'error' });
-            }
             break;
 
           case 'transcript':
@@ -220,6 +221,7 @@ export const PresenterView: React.FC<PresenterViewProps> = ({ slideUrl, onExit }
             if ('html' in message) {
               injectSummary(message.html);
               setAiStatus('Summary Injected');
+              setIsGeneratingSummary(false);
               setTimeout(() => setDetectedIntent(null), 5000);
             }
             break;
@@ -389,16 +391,6 @@ export const PresenterView: React.FC<PresenterViewProps> = ({ slideUrl, onExit }
 
   return (
     <div className="presenter-view">
-      <AnimatePresence>
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
-          />
-        )}
-      </AnimatePresence>
-
       <div className="presenter-dashboard">
         <div className="dashboard-header">
           <h2>Presenter Dashboard</h2>
@@ -432,12 +424,12 @@ export const PresenterView: React.FC<PresenterViewProps> = ({ slideUrl, onExit }
             </button>
           </div>
 
-          {/* 2. Live Transcript */}
+          {/* 2. AI Response */}
           <div className="control-section transcript-section">
-            <h3>Live Transcript</h3>
+            <h3>AI Response</h3>
             <div className="transcript-box">
               {transcript.length === 0 ? (
-                <div className="transcript-placeholder">Speak to see transcript...</div>
+                <div className="transcript-placeholder">AI responses will appear here...</div>
               ) : (
                 transcript.map((text, i) => (
                   <div key={i} className="transcript-line">"{text}"</div>
@@ -489,8 +481,13 @@ export const PresenterView: React.FC<PresenterViewProps> = ({ slideUrl, onExit }
               <button className="control-btn disabled" title="Coming Soon">
                 <ImageIcon size={16} /> Inject
               </button>
-              <button className="control-btn disabled" title="Coming Soon">
-                <FileText size={16} /> Summary
+              <button 
+                className={`control-btn ${isGeneratingSummary ? 'loading' : ''}`}
+                onClick={requestSummary}
+                disabled={isGeneratingSummary}
+                title={isGeneratingSummary ? 'Generating...' : 'Generate presentation summary'}
+              >
+                <FileText size={16} /> {isGeneratingSummary ? 'Generating...' : 'Summary'}
               </button>
             </div>
           </div>
